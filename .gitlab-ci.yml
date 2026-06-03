@@ -1,0 +1,34 @@
+############################################
+# AWX Execution Environment Pipeline
+# Repo: infra_team/automation/ee-aws-kubernetes
+#
+# Purpose:
+# - Consumes the centralized enterprise EE build pipeline.
+# - Builds an EKS/Kubernetes-capable AWX execution environment.
+# - Pushes the image to this project's GitLab Container Registry.
+# - Optionally registers or updates the EE in AWX.
+############################################
+
+include:
+  - project: infra_team/platform-pipelines
+    ref: main
+    file: ansible/ee.yml
+
+variables:
+  EE_IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+  AWX_EE_NAME: "ee-aws-kubernetes"
+  AWX_EE_PULL: "always"
+  EE_REGISTER_IN_AWX: "true"
+  AWX_HOST: "http://awx.midhtech.local"
+  AWX_EE_REGISTRY_CREDENTIAL_NAME: "gitlab-container-registry"
+
+  EE_SMOKE_COLLECTIONS: "amazon.aws community.aws kubernetes.core"
+  EE_SMOKE_EXECUTABLES: "aws"
+  EE_SMOKE_COMMANDS: |
+    kubectl version --client=true
+    helm version
+  EE_SMOKE_PYTHON_IMPORTS: "boto3 botocore kubernetes yaml"
+  EE_SMOKE_PYTHON_BIN: "python3"
+
+  # Secret values are intentionally not stored in this repo.
+  # Configure AWX_USERNAME and AWX_PASSWORD as masked/protected GitLab CI/CD variables.

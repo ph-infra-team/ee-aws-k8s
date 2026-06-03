@@ -1,0 +1,26 @@
+---
+version: 3
+
+images:
+  base_image:
+    name: quay.io/ansible/ansible-runner:latest
+
+dependencies:
+  ansible_core:
+    package_pip: ansible-core==2.13.13
+  ansible_runner:
+    package_pip: ansible-runner==2.3.6
+  galaxy: requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+
+additional_build_steps:
+  append_final:
+    - RUN python3 -c "from urllib.request import urlretrieve; urlretrieve('https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip', '/opt/awscliv2.zip')"
+    - RUN mkdir -p /opt/awscliv2-build && python3 -m zipfile -e /opt/awscliv2.zip /opt/awscliv2-build && chmod -R 0755 /opt/awscliv2-build/aws && sh /opt/awscliv2-build/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli && chmod -R a+rx /usr/local/aws-cli && chmod 0755 /usr/local/bin/aws && rm -rf /opt/awscliv2-build /opt/awscliv2.zip
+    - RUN python3 -c "from urllib.request import urlretrieve; urlretrieve('https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl', '/usr/local/bin/kubectl')" && chmod 0755 /usr/local/bin/kubectl
+    - RUN python3 -c "from urllib.request import urlretrieve; urlretrieve('https://get.helm.sh/helm-v3.17.3-linux-amd64.tar.gz', '/tmp/helm.tar.gz')"
+    - RUN python3 -c "import tarfile; tarfile.open('/tmp/helm.tar.gz', 'r:gz').extractall('/tmp')" && mv /tmp/linux-amd64/helm /usr/local/bin/helm && chmod 0755 /usr/local/bin/helm && rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
+    - RUN aws --version
+    - RUN kubectl version --client=true
+    - RUN helm version
